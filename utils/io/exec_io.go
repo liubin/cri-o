@@ -28,8 +28,9 @@ import (
 
 // ExecIO holds the exec io.
 type ExecIO struct {
-	id    string
-	fifos *cio.FIFOSet
+	id      string
+	exec_id string
+	fifos   *cio.FIFOSet
 	*stdioPipes
 	closer *wgCloser
 }
@@ -54,6 +55,10 @@ func NewExecIO(id, root string, tty, stdin bool) (*ExecIO, error) {
 	}, nil
 }
 
+func (e *ExecIO) SetEid(eid string) {
+	e.exec_id = eid
+}
+
 // Config returns io config.
 func (e *ExecIO) Config() cio.Config {
 	return e.fifos.Config
@@ -70,12 +75,16 @@ func (e *ExecIO) Attach(opts AttachOptions) <-chan struct{} {
 			if _, err := io.Copy(e.stdin, stdinStreamRC); err != nil {
 				logrus.WithError(err).Errorf("Failed to redirect stdin for container exec %q", e.id)
 			}
-			logrus.Infof("Container exec %q stdin closed", e.id)
+			logrus.Infof("AAAAAAA Container exec %q stdin closed", e.exec_id)
 			if opts.StdinOnce && !opts.Tty {
+				logrus.Infof("AAAAAAA begin e.stdin.Close() %v", e.exec_id)
 				e.stdin.Close()
+				logrus.Infof("AAAAAAA end e.stdin.Close() %v", e.exec_id)
+				logrus.Infof("AAAAAAA begin opts.CloseStdin() %v", e.exec_id)
 				if err := opts.CloseStdin(); err != nil {
 					logrus.WithError(err).Errorf("Failed to close stdin for container exec %q", e.id)
 				}
+				logrus.Infof("AAAAAAA end opts.CloseStdin() %v", e.exec_id)
 			} else {
 				if e.stdout != nil {
 					e.stdout.Close()

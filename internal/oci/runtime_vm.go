@@ -343,6 +343,7 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 	if err != nil {
 		return -1, errdefs.FromGRPC(err)
 	}
+	execIO.SetEid(execID)
 	defer execIO.Close()
 
 	// chan to notify that can call runtime's CloseIO API
@@ -360,7 +361,9 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 		Tty:       tty,
 		StdinOnce: true,
 		CloseStdin: func() error {
+			logrus.Errorf("AAAAAAA ++ wait closeIOChan to be closed %+v", execID)
 			<-closeIOChan
+			logrus.Errorf("AAAAAAA -- closeIOChan closed %+v", execID)
 			return r.closeIO(ctx, c.ID(), execID)
 		},
 	})
@@ -396,14 +399,17 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 		}
 	}()
 
+	logrus.Errorf("AAAAAAA begin exec start %+v", execID)
 	// Start the process
 	if err := r.start(ctx, c.ID(), execID); err != nil {
 		return -1, err
 	}
+	logrus.Errorf("AAAAAAA end exec start %+v", execID)
 
 	// close closeIOChan to notify execIO exec has started.
 	close(closeIOChan)
 	closeIOChan = nil
+	logrus.Errorf("AAAAAAA closeIOChan closed %+v", execID)
 
 	// Initialize terminal resizing if necessary
 	if resize != nil {
@@ -429,7 +435,9 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 	execCh := make(chan error)
 	go func() {
 		// Wait for the process to terminate
+		logrus.Errorf("AAAAAAA begin to wait %+v", execID)
 		exitCode, err = r.wait(ctx, c.ID(), execID)
+		logrus.Errorf("AAAAAAA end to wait %+v", execID)
 		if err != nil {
 			execCh <- err
 		}
@@ -459,6 +467,12 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 			logrus.Debugf("unable to remove container %s: %v", c.ID(), err)
 		}
 	}
+	logrus.Errorf("AAAAAAA                                %+v", execID)
+	logrus.Errorf("AAAAAAA                                %+v", execID)
+	logrus.Errorf("AAAAAAA                                %+v", execID)
+	logrus.Errorf("AAAAAAA                                %+v", execID)
+	logrus.Errorf("AAAAAAA                                %+v", execID)
+	logrus.Errorf("AAAAAAA                                %+v", execID)
 
 	return exitCode, err
 }

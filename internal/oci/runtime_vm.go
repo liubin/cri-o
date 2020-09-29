@@ -350,19 +350,25 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 	// chan to notify that can call runtime's CloseIO API
 	closeIOChan := make(chan bool)
 	defer func() {
-		if closeIOChan != nil {
+		if closeIOChan != nil && stdin != nil{
 			close(closeIOChan)
 		}
 	}()
 
+	stdinClosedChan := make(chan bool)
+
 	execIO.Attach(cio.AttachOptions{
-		Stdin:     stdin,
-		Stdout:    stdout,
-		Stderr:    stderr,
-		Tty:       tty,
-		StdinOnce: true,
+		Stdin:           stdin,
+		Stdout:          stdout,
+		Stderr:          stderr,
+		Tty:             tty,
+		StdinOnce:       true,
+		StdinClosedChan: stdinClosedChan,
 		CloseStdin: func() error {
+			logrus.Error("AAAAAAAAA wait closeIOChan to be closed")
 			<-closeIOChan
+			closeIOChan = nil
+			logrus.Error("AAAAAAAAA closeIOChan to be closed")
 			return r.closeIO(ctx, c.ID(), execID)
 		},
 	})
@@ -398,14 +404,23 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 		}
 	}()
 
+	logrus.Error("AAAAAAAAA before real start")
 	// Start the process
 	if err := r.start(ctx, c.ID(), execID); err != nil {
 		return -1, err
 	}
+	logrus.Error("AAAAAAAAA end real start")
 
-	// close closeIOChan to notify execIO exec has started.
-	close(closeIOChan)
-	closeIOChan = nil
+	if stdin != nil {
+		go func() {
+			logrus.Error("AAAAAAAAA wait stdinClosedChan to be closed")
+			<- stdinClosedChan
+			logrus.Error("AAAAAAAAA stdinClosedChan closed")
+			// close closeIOChan to notify execIO exec has started.
+			close(closeIOChan)
+			logrus.Error("AAAAAAAAA closeIOChan closed in main thread")
+		}()
+	}
 
 	// Initialize terminal resizing if necessary
 	if resize != nil {
@@ -430,8 +445,10 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 
 	execCh := make(chan error)
 	go func() {
+		logrus.Errorf("AAAAAAAAA begin to wait execID %+v", execID)
 		// Wait for the process to terminate
 		exitCode, err = r.wait(ctx, c.ID(), execID)
+		logrus.Errorf("AAAAAAAAA end to wait execID %+v", execID)
 		if err != nil {
 			execCh <- err
 		}

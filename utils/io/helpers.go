@@ -31,11 +31,12 @@ import (
 
 // AttachOptions specifies how to attach to a container.
 type AttachOptions struct {
-	Stdin     io.Reader
-	Stdout    io.WriteCloser
-	Stderr    io.WriteCloser
-	Tty       bool
-	StdinOnce bool
+	Stdin           io.Reader
+	Stdout          io.WriteCloser
+	Stderr          io.WriteCloser
+	Tty             bool
+	StdinOnce       bool
+	StdinClosedChan chan bool
 	// CloseStdin is the function to close container stdin.
 	CloseStdin func() error
 }

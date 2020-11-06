@@ -362,8 +362,12 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 		Tty:       tty,
 		StdinOnce: true,
 		CloseStdin: func() error {
+			logrus.Error("AAAAAAAAAAAAAAAAA wait signal to closeIO")
 			<-closeIOChan
-			return r.closeIO(ctx, c.ID(), execID)
+			logrus.Error("AAAAAAAAAAAAAAAAA got signal to closeIO")
+			x:= r.closeIO(ctx, c.ID(), execID)
+			logrus.Errorf("AAAAAAAAAAAAAAAAA closeIO: %+v", x)
+			return x
 		},
 	})
 
@@ -389,6 +393,7 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 	if _, err = r.task.Exec(ctx, request); err != nil {
 		return -1, errdefs.FromGRPC(err)
 	}
+	logrus.Error("AAAAAAAAAAAAAAAAA exec created")
 
 	defer func() {
 		if retErr != nil {
@@ -402,10 +407,12 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 	if err := r.start(ctx, c.ID(), execID); err != nil {
 		return -1, err
 	}
+	logrus.Error("AAAAAAAAAAAAAAAAA exec started")
 
 	// close closeIOChan to notify execIO exec has started.
 	close(closeIOChan)
 	closeIOChan = nil
+	logrus.Error("AAAAAAAAAAAAAAAAA notify signal closed")
 
 	// Initialize terminal resizing if necessary
 	if resize != nil {
@@ -431,7 +438,9 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 	execCh := make(chan error)
 	go func() {
 		// Wait for the process to terminate
+		logrus.Error("AAAAAAAAAAAAAAAAA before wait")
 		exitCode, err = r.wait(ctx, c.ID(), execID)
+		logrus.Error("AAAAAAAAAAAAAAAAA after wait")
 		if err != nil {
 			execCh <- err
 		}

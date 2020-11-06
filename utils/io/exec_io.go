@@ -70,12 +70,15 @@ func (e *ExecIO) Attach(opts AttachOptions) <-chan struct{} {
 			if _, err := io.Copy(e.stdin, stdinStreamRC); err != nil {
 				logrus.WithError(err).Errorf("Failed to redirect stdin for container exec %q", e.id)
 			}
+			logrus.Error("AAAAAAAAAAAAAAAAA io.Copy finished")
 			logrus.Infof("Container exec %q stdin closed", e.id)
 			if opts.StdinOnce && !opts.Tty {
 				e.stdin.Close()
+				logrus.Error("AAAAAAAAAAAAAAAAA e.stdin.Close()")
 				if err := opts.CloseStdin(); err != nil {
 					logrus.WithError(err).Errorf("Failed to close stdin for container exec %q", e.id)
 				}
+				logrus.Error("AAAAAAAAAAAAAAAAA opts.CloseStdin() called")
 			} else {
 				if e.stdout != nil {
 					e.stdout.Close()

@@ -349,11 +349,11 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 
 	// chan to notify that can call runtime's CloseIO API
 	closeIOChan := make(chan bool)
-	defer func() {
-		if closeIOChan != nil {
-			close(closeIOChan)
-		}
-	}()
+	// defer func() {
+	// 	if closeIOChan != nil {
+	// 		close(closeIOChan)
+	// 	}
+	// }()
 
 	execIO.Attach(cio.AttachOptions{
 		Stdin:     stdin,
@@ -411,7 +411,7 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 
 	// close closeIOChan to notify execIO exec has started.
 	close(closeIOChan)
-	closeIOChan = nil
+	// closeIOChan = nil
 	logrus.Error("AAAAAAAAAAAAAAAAA notify signal closed")
 
 	// Initialize terminal resizing if necessary

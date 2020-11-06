@@ -367,7 +367,6 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 		CloseStdin: func() error {
 			logrus.Error("AAAAAAAAA wait closeIOChan to be closed")
 			<-closeIOChan
-			closeIOChan = nil
 			logrus.Error("AAAAAAAAA closeIOChan to be closed")
 			return r.closeIO(ctx, c.ID(), execID)
 		},
@@ -413,11 +412,13 @@ func (r *runtimeVM) execContainerCommon(c *Container, cmd []string, timeout int6
 
 	if stdin != nil {
 		go func() {
-			logrus.Error("AAAAAAAAA wait stdinClosedChan to be closed")
-			<- stdinClosedChan
-			logrus.Error("AAAAAAAAA stdinClosedChan closed")
-			// close closeIOChan to notify execIO exec has started.
-			close(closeIOChan)
+			// logrus.Error("AAAAAAAAA wait stdinClosedChan to be closed")
+			// <- stdinClosedChan
+			// logrus.Error("AAAAAAAAA stdinClosedChan closed")
+			// // close closeIOChan to notify execIO exec has started.
+			// close(closeIOChan)
+			// closeIOChan=nil
+			closeIOChan <- true
 			logrus.Error("AAAAAAAAA closeIOChan closed in main thread")
 		}()
 	}

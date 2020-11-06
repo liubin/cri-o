@@ -72,16 +72,16 @@ func (e *ExecIO) Attach(opts AttachOptions) <-chan struct{} {
 			}
 
 			// notify that stdin has closed.
-			close(opts.StdinClosedChan)
+			// close(opts.StdinClosedChan)
 
 			logrus.Infof("Container exec %q stdin closed", e.id)
 			if opts.StdinOnce && !opts.Tty {
 				e.stdin.Close()
-				logrus.Info("AAAAAAAA BBBBBB before opts.CloseStdin()")
+				logrus.Info("    AAAAAAAA BBBBBB before opts.CloseStdin()")
 				if err := opts.CloseStdin(); err != nil {
 					logrus.WithError(err).Errorf("Failed to close stdin for container exec %q", e.id)
 				}
-				logrus.Info("AAAAAAAA BBBBBB end opts.CloseStdin()")
+				logrus.Info("    AAAAAAAA BBBBBB end opts.CloseStdin()")
 			} else {
 				if e.stdout != nil {
 					e.stdout.Close()
